@@ -43,7 +43,7 @@ sub getChannelData {
     );
 
     # For each day...
-    while ($html =~ m/.*?<h2>Amazing\sDiscoveries\sSatellite\sSchedule\s<br\s\/>\s*for\s[^\s]+\s*-\s+([^\s]+)\s+(\d+)\,\s+(\d+).*?(<tr>\s*<td>12:00 AM<\/td>.*?<\/table>)(.*)/s) {
+    while ($html =~ m/.*?<h2>Amazing\sDiscoveries\sSatellite\sSchedule\s<br\s\/>\s*for\s[^\s]+\s*-\s+([^\s]+)\s+(\d+)\,\s+(\d+).*?(<tr>\s*<td>0:00 AM<\/td>.*?<\/table>)(.*)/s) {
         my ($monthName, $day, $year, $dayHtml) = ($1, $2, $3, $4);
         $html = $5;
 
