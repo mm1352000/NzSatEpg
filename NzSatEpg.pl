@@ -31,6 +31,7 @@ use Channels::GodTv;
 use Channels::HopeChannel;
 use Channels::Inspiration;
 use Channels::NhkWorld;
+use Channels::Ovation;
 use Channels::PressTv;
 use Channels::RussiaToday;
 use Channels::Tbn;
@@ -121,6 +122,7 @@ printChannelData(XmlTv::NzSatEpg::Channels::GodTv::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::HopeChannel::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::Inspiration::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::NhkWorld::getChannelData());
+printChannelData(XmlTv::NzSatEpg::Channels::Ovation::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::PressTv::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::RussiaToday::getChannelData());
 printChannelData(XmlTv::NzSatEpg::Channels::Tbn::getChannelData());
@@ -139,7 +141,7 @@ sub toHoursAndMinutes {
 
     my $rawTime = shift;
     my $hours;
-    $rawTime =~ m/^\s*(\d+):(\d+)\s*([AP]M)?\s*$/;
+    $rawTime =~ m/^\s*(\d+):(\d+)\s*([AaPp][Mm])?\s*$/;
     $hours = ($1 == 12) ? 0 : $1;
     $hours += 12 if (uc($3) eq 'PM');
     return ($hours, $2);

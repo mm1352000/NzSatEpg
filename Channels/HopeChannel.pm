@@ -69,8 +69,9 @@ sub getChannelData {
             my $rawTitle = $sheet->get_cell(3, 2)->value();
             if ($rawTitle =~ m/^\s*([^\s]+)\s+(\d+).*$/) {
                 $referenceDateTime = DateTime->today(time_zone => 'UTC')->set(day => $2, month => $::monthMap{$1}, hour => 0, minute => 0);
-                # Handle the case where the first month in the schedule is December and the current
-                # date is January later in the next year.
+                # Handle the case where the first month in the schedule is in a different year to
+                # the current date. For example, reading the schedule for December in January or
+                # later.
                 if (($referenceDateTime - DateTime->today())->months() > 6) {
                     $referenceDateTime->add(years => -1);
                 }
