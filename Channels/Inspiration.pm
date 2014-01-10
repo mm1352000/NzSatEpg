@@ -402,7 +402,7 @@ sub gridBuilder {
 
 sub scheduleInterpreter {
 
-	my ($text, $ref) = @_;
+    my ($text, $ref) = @_;
 
     my ($x1, $x2, $y1, $y2, $width, $height) = round($ref->[4], $ref->[4] + $ref->[0], $ref->[5], $ref->[5] + $ref->[3], $ref->[0], $ref->[3]);
 
@@ -505,10 +505,10 @@ sub getChannelData {
         if ($response->content =~ m/.*?<div\s+class="entry\-content">\s*<table[^>]*>(.*?)<\/table>.*/s) {
             my $content = $1;
             $content =~ s/<strong>//g;
-            $content =~ s/<\/strong>//g;
-            while ($content =~ m/.*?<tr>\s*<td>.*?\s*([^<>]*?)\s*<br\s*\/>\s*(.*?)\s*<\/td>(.*)/s) {
-                $progInfo->{$1} = { 'description' => $2 };
-                $content = $3;
+            $content =~ s/<\/strong>/<br \/>/g;
+            while ($content =~ m/.*?<tr>\s*<td>.*?\s*([^<>]*?)(\s*<br\s*\/>\s*)+(.*?)\s*<\/td>(.*)/s) {
+                $progInfo->{$1} = { 'description' => $3 };
+                $content = $4;
             }
         }
         else {
@@ -548,7 +548,7 @@ sub getChannelData {
     }
 
     # Find the link and download the PDF.
-    if ($response->content !~ m/.*?<a.*?href="([^"]*)"[^>]*>Download PDF Schedule<\/a>.*/s) {
+    if ($response->content !~ m/.*?<a.*?href="([^"]*)"[^>]*>(<strong>)?Download PDF Schedule(<\/strong>)?<\/a>.*/s) {
         print $::dbg 'INI (' . __LINE__ . "): Failed to find the schedule PDF link.\n";
         return undef;
     }
@@ -593,7 +593,7 @@ sub getChannelData {
         return undef;
     }
     $pdf->readPage(1);
-    if ((scalar(@$vLines) != 9 && scalar(@$vLines) != 10) || scalar(@$hLines) != 50) {
+    if ((scalar(@$vLines) != 9 && scalar(@$vLines) != 10) || scalar(@$hLines) != 51) {
         print $::dbg 'INI (' . __LINE__ . '): Unexpected grid format; ' . scalar(@$vLines) . ' vertical lines and ' . scalar(@$hLines) . " horizontal lines.\n";
         return undef;
     }
@@ -602,10 +602,11 @@ sub getChannelData {
     @$vLines = sort { $a->[0] <=> $b->[0] } @$vLines;
     @$vLines = @{$vLines}[1..8];
 
-    # ...and the line above the headers. The horizontal line sorting is from top to bottom of the
-    # page (remember the origin is at the bottom left corner, so that is why we reverse sort).
+    # ...and the lines above the header and below the footer. The horizontal line sorting is from
+    # top to bottom of the page (remember the origin is at the bottom left corner, so that is why
+    # we reverse sort).
     @$hLines = sort { $b->[0] <=> $a->[0] } @$hLines;
-    @$hLines = @{$hLines}[1..49];
+    @$hLines = @{$hLines}[2..50];
 
     # In the second pass we are able to build a picture of the grid that enables us to identify
     # programmes that run for longer than half an hour. In other words, we look for merged cells.
@@ -632,6 +633,15 @@ sub getChannelData {
             foreach my $l (@textLines) {
                 my @textLineFragments = sort { $a <=> $b } keys %{$grid->[$x][$y]{'text'}{$l}};
                 foreach my $f (@textLineFragments) {
+                    # Some titles are multi-line in the PDF. These titles don't actually include a
+                    # space to separate the last word on the top line with the first word on the
+                    # bottom line. We do that here. If the fragment starts with an upper-case
+                    # letter...
+                    my $t = $grid->[$x][$y]{'text'}{$l}{$f};
+                    my $titleLength = length($progTitle);
+                    if ($titleLength != 0 && substr($progTitle, $titleLength - 1) ne ' ' && substr($t, 0, 1) =~ m/[A-Z]/) {
+                        $progTitle .= ' ';
+                    }
                     $progTitle .= $grid->[$x][$y]{'text'}{$l}{$f};
                 }
             }

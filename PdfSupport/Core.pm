@@ -564,8 +564,13 @@ sub buildFontMap {
                 }
                 # Maps that include ranges are a little more tricky!
                 else {
-                    while ($mapChunk =~ m/\s*<([^>]+)>\s*<([^>]+)>\s*(.*?)\n(.*)/s) {
-                        $mapChunk = $4;
+                    my @chunks = split("\n", $mapChunk);
+                    foreach my $chunk (@chunks) {
+                        if ($chunk !~ m/^\s*<([^>]+)>\s*<([^>]+)>\s*(.*)/) {
+                            print $debugStream 'PdfSupport::Core (' . __LINE__ . "): The to-unicode map for font '$fontName' included a range that we failed to handle.\n$fontToUnicodeStream\n\n";
+                            last;
+                        }
+
                         my ($start, $end, $range) = (hex($1), hex($2), $3);
                         my $rangeIsSpecific = 1;
                         if ($range =~ m/^\s*<([^>]*)>\s*$/) {
