@@ -63,7 +63,7 @@ insert a hash (#) at the start of the corresponding line:
 
 Execution
 ----------
-Use the a terminal, DOS prompt or command line environment to execute
+Use the terminal, DOS prompt or command line environment to execute
 NzSatEpg.pl. For example:
 
 cd "c:\Program Files\NzSatEpg"
@@ -75,7 +75,7 @@ Debugging
 ----------
 The script is normally very terse. It will print version, licence and copyright
 information at startup and a success message on completion. To get more verbose
-output, set a DEBUG_NZSATEPG variable.
+output, create a DEBUG_NZSATEPG environment variable with any non-zero value.
 
 Version
 --------
