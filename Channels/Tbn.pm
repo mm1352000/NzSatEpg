@@ -135,7 +135,9 @@ sub getChannelData {
         my $response = $::wua->get('http://tvguide.tbn.org.au/day.cfm?dst=' . $currentAestDate->is_dst() . '&offset=1000&date=' . $currentAestDate->strftime('%d%m%Y'));
         if ($response->is_error()) {
             print $::dbg 'TBN (' . __LINE__ . '): The request for the tbn.org.au schedule HTML failed. ' . $response->status_line() . "\n";
-            return undef;
+            # tbn.org.au is down for maintenance.
+            #return undef;
+            last;
         }
 
         # Cut to the relevant content.
@@ -226,7 +228,7 @@ sub getChannelData {
 
             # Match/select programmes.
             if (!exists $localSchedule->[$channelIndex]{$time}) {
-                if ($time > $localTimes[0] && $time < $localTimes[$#localTimes]) {
+                if (scalar(@localTimes) == 0 || ($time > $localTimes[0] && $time < $localTimes[$#localTimes])) {
                     #print $::dbg "TBN: Exclusive US programme $time.." . $usSchedule->[$channelIndex]{$time}{'end'} . " '" . $usSchedule->[$channelIndex]{$time}{'title'} . "'.\n";
                 }
                 $schedule->[$channelIndex]{'schedule'}{$time} = $usSchedule->[$channelIndex]{$time};
