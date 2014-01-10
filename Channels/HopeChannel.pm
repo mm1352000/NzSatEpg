@@ -72,7 +72,7 @@ sub getChannelData {
                 # Handle the case where the first month in the schedule is December and the current
                 # date is January later in the next year.
                 if (($referenceDateTime - DateTime->today())->months() > 6) {
-                    $referenceDateTime = $referenceDateTime->add(years => -1);
+                    $referenceDateTime->add(years => -1);
                 }
             }
             else {

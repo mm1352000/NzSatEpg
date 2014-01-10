@@ -35,7 +35,7 @@ sub getChannelData {
     my $html = $response->content;
 
     my %schedule = ();
-	my %prevProg = (
+    my %prevProg = (
         'title' => ''
         , 'episode title' => ''
         , 'host' => undef

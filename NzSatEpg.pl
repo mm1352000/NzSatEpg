@@ -41,7 +41,7 @@ use Channels::ThreeAbn;
 # Important Variables
 #==================================================================================================
 # This is the full path to the output file.
-$::outputFile = 'C:\Program Files\XMLTV\tvguide.xml';
+$::outputFile = 'C:\Program Files\XMLTV\tvguide2.xml';
 
 # This is the directory that is used to store the files that are downloaded by this script.
 $::tempPath = 'C:\Program Files\XMLTV';
@@ -61,30 +61,30 @@ $::targetTimeZone = 'Pacific/Auckland';
 $::daysToGrab = 14;
 
 %::monthMap = (
-	'January'	=> 1,
-	'Jan'		=> 1,
-	'February'	=> 2,
-	'Feb'		=> 2,
-	'March'		=> 3,
-	'Mar'		=> 3,
-	'April'		=> 4,
-	'Apr'		=> 4,
-	'May'		=> 5,
-	'May'		=> 5,
-	'June'		=> 6,
-	'Jun'		=> 6,
-	'July'		=> 7,
-	'Jul'		=> 7,
-	'August'	=> 8,
-	'Aug'		=> 8,
-	'September'	=> 9,
-	'Sep'		=> 9,
-	'October'	=> 10,
-	'Oct'		=> 10,
-	'November'	=> 11,
-	'Nov'		=> 11,
-	'December'	=> 12,
-	'Dec'		=> 12
+    'January'    => 1,
+    'Jan'        => 1,
+    'February'    => 2,
+    'Feb'        => 2,
+    'March'        => 3,
+    'Mar'        => 3,
+    'April'        => 4,
+    'Apr'        => 4,
+    'May'        => 5,
+    'May'        => 5,
+    'June'        => 6,
+    'Jun'        => 6,
+    'July'        => 7,
+    'Jul'        => 7,
+    'August'    => 8,
+    'Aug'        => 8,
+    'September'    => 9,
+    'Sep'        => 9,
+    'October'    => 10,
+    'Oct'        => 10,
+    'November'    => 11,
+    'Nov'        => 11,
+    'December'    => 12,
+    'Dec'        => 12
 );
 
 #===============================================================================================
@@ -94,7 +94,7 @@ $::daysToGrab = 14;
 $| = 1;
 open(OUTPUT, ">$::outputFile") || die __LINE__ . ": Failed to open the output stream for writing.\n";
 if (!exists $ENV{'DEBUG_NZSATEPG'}) {
-	$::debugFile = ($^O =~ m/MSWin/) ? 'NUL' : '/dev/null';
+    $::debugFile = ($^O =~ m/MSWin/) ? 'NUL' : '/dev/null';
 }
 open($::dbg, ">$::debugFile") || die __LINE__ . ": Failed to open the debug stream for writing.\n";
 $::dbg->autoflush(1);
@@ -139,7 +139,7 @@ sub toHoursAndMinutes {
 
     my $rawTime = shift;
     my $hours;
-    $rawTime =~ m/^\s*(\d+):(\d+)\s*(.+)\s*$/;
+    $rawTime =~ m/^\s*(\d+):(\d+)\s*([AP]M)?\s*$/;
     $hours = ($1 == 12) ? 0 : $1;
     $hours += 12 if (uc($3) eq 'PM');
     return ($hours, $2);
@@ -148,34 +148,34 @@ sub toHoursAndMinutes {
 # This subroutine is used to tidy up the titles and descriptions that get put into the output file.
 sub tidyText {
 
-	my $text = shift || '';
+    my $text = shift || '';
 
-	# Deal with links.
-	$text =~ s/<a.*?href="([^"]*)".*?>\s*(.*?)\s*<\/a>/$2 ($1)/gi;
+    # Deal with links.
+    $text =~ s/<a.*?href="([^"]*)".*?>\s*(.*?)\s*<\/a>/$2 ($1)/gi;
 
-	# Replace newline, HTML break and multiple spaces with a single space.
-	$text =~ s/(\r)?\n(\r)?/ /gs;
-	$text =~ s/<br(\s*\/)?>(<br(\s*\/)?>)?/ /gi;
-	$text =~ s/\s\s+/ /g;
+    # Replace newline, HTML break and multiple spaces with a single space.
+    $text =~ s/(\r)?\n(\r)?/ /gs;
+    $text =~ s/<br(\s*\/)?>(<br(\s*\/)?>)?/ /gi;
+    $text =~ s/\s\s+/ /g;
 
-	# Convert HTML entities (eg. &amp; &acute;) into characters.
-	$text = decode_entities($text);
+    # Convert HTML entities (eg. &amp; &acute;) into characters.
+    $text = decode_entities($text);
 
-	# Some entities should be left alone.
-	$text =~ s/&/&amp;/gi;
-	$text =~ s/</&lt;/gi;
-	$text =~ s/>/&gt;/gi;
-	$text =~ s/"/&quot;/gi;
+    # Some entities should be left alone.
+    $text =~ s/&/&amp;/gi;
+    $text =~ s/</&lt;/gi;
+    $text =~ s/>/&gt;/gi;
+    $text =~ s/"/&quot;/gi;
 
-	# Encode unicode characters correctly.
-	while ($text =~ m/(\P{IsASCII})/) {
-		my $code = sprintf("%04x", ord($1));
-		$text =~ s/\x{$code}/&#x$code;/g;
-	}
+    # Encode unicode characters correctly.
+    while ($text =~ m/(\P{IsASCII})/) {
+        my $code = sprintf("%04x", ord($1));
+        $text =~ s/\x{$code}/&#x$code;/g;
+    }
 
-	# Remove leading and trailing whitespace.
-	$text =~ s/^\s*(.*?)\s*$/$1/s;
-	return $text;
+    # Remove leading and trailing whitespace.
+    $text =~ s/^\s*(.*?)\s*$/$1/s;
+    return $text;
 }
 
 sub printChannelData {
@@ -196,7 +196,7 @@ sub printChannelData {
 
 sub printChannelEntry {
 
-	my ($channel) = @_;
+    my ($channel) = @_;
 
     print OUTPUT "<channel id=\"" . $channel->{'id'} . "\">\n";
     print OUTPUT "\t<display-name>" . $channel->{'name'} . "</display-name>\n";
@@ -210,10 +210,10 @@ sub printChannelEntry {
 
 sub printProgrammeEntry {
 
-	my ($channelId, $programme) = @_;
+    my ($channelId, $programme) = @_;
 
-	print OUTPUT "<programme channel=\"$channelId\" start=\"" . $programme->{'start'} . '00" stop="' . $programme->{'end'} . "00\">\n";
-	print OUTPUT "\t<title>" . tidyText($programme->{'title'}) .  "</title>\n";
+    print OUTPUT "<programme channel=\"$channelId\" start=\"" . $programme->{'start'} . '00" stop="' . $programme->{'end'} . "00\">\n";
+    print OUTPUT "\t<title>" . tidyText($programme->{'title'}) .  "</title>\n";
     if (exists $programme->{'episode title'}) {
         print OUTPUT "\t<sub-title>" . tidyText($programme->{'episode title'}) .  "</sub-title>\n";
     }
@@ -258,5 +258,5 @@ sub printProgrammeEntry {
             print OUTPUT "\t<rating system=\"$system\">$value</rating>\n";
         }
     }
-	print OUTPUT "</programme>\n";
+    print OUTPUT "</programme>\n";
 }

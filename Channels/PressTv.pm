@@ -29,7 +29,7 @@ sub getChannelData {
     my %schedule = ();
     my $currentGmtDate = $::startDate->clone()->set_time_zone('UTC')->truncate(to => 'day');
     my $targetTzDate = $::startDate->clone();
-	my %prevProg = (
+    my %prevProg = (
         'title' => ''
         , 'start' => undef
         , 'description' => ''

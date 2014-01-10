@@ -332,7 +332,8 @@ sub grabTbnSchedule {
     my $currentPstDate = $::startDate->clone()->add(hours => -$offset)->set_time_zone('America/Los_Angeles')->truncate(to => 'day');
     my $daysGrabbed = 0;
     while ($::daysToGrab - $daysGrabbed > 0) {
-        my $response = $::wua->get("$channelUrlStub/watch/schedule_weekview.php?timezone=p&view=7&date=" . $currentPstDate->strftime('%Y%m%d'));
+        my $weekStart = $currentPstDate->strftime('%Y%m%d');
+        my $response = $::wua->get("$channelUrlStub/watch/schedule_weekview.php?timezone=p&view=7&date=$weekStart");
         if ($response->is_error()) {
             $channelUrlStub =~ s/http:\/\/www\.//;
             print $::dbg 'TBN (' . __LINE__ . '): The request for the $channelUrlStub schedule HTML failed. ' . $response->status_line() . "\n";
@@ -354,7 +355,7 @@ sub grabTbnSchedule {
         }
 
         # Now process the schedule.
-        print $::dbg "TBN: Processing the schedule.\n";
+        print $::dbg "TBN: Processing the schedule for week $weekStart...\n";
         my @dayProcessingProgress = (0, 0, 0, 0, 0, 0, 0);
         foreach my $halfHourSlot (split(/<tr>/, $scheduleHtml)) {
             # Separate the start time from the details of the programmes that run in that slot (over

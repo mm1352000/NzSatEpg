@@ -49,7 +49,7 @@ sub getChannelData {
 
     print $::dbg "3ABN: Grabbing the schedule...\n";
     my %schedule = ();
-	my $prevProg = undef;
+    my $prevProg = undef;
     my %progMatches = ();
     my %form = (
         'network' => 4                              # We're interested in the international feed.
@@ -68,7 +68,7 @@ sub getChannelData {
             return undef;
         }
 
-        if ($response->content !~ m/.*?"programs":\[(.*?)]\,"programs_monthly"/s) {
+        if ($response->content !~ m/.*?"programs":\[(.*?)]\,/s) {
             print $::dbg '3ABN (' . __LINE__ . "): The schedule format has changed.\n";
             return undef;
         }

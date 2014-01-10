@@ -33,18 +33,18 @@ sub getChannelData {
     my $prevStartDateTime = undef;
     while ($currentSeoulDate->clone()->set_time_zone($::targetTimeZone) < $::endDate) {
         my $weekStart = $currentSeoulDate->strftime('%Y-%m-%d');
-        print $::dbg "Arirang:\tweek $weekStart...\n";
         my $response = $::wua->get("http://www.arirang.co.kr/Tv/TV_Index.asp?MType=S&Channel=1&F_Date=$weekStart");
         if ($response->is_error()) {
             print $::dbg 'Arirang (' . __LINE__ . '): The request for the schedule HTML failed. ' . $response->status_line() . "\n";
             return undef;
         }
         my $html = $response->content;
+        print $::dbg "Arirang: Processing the schedule for week $weekStart...\n";
 
         # For each day...
         my $d = 1;
         while ($html =~ m/.*?<table.*?summary="TV\s+Schedule">.*?<tbody>(.*?)<\/tbody>(.*)/s) {
-            print $::dbg "Arirang:\t\tday " . $d++ . "...\n";
+            print $::dbg "Arirang:\tday " . $d++ . "...\n";
             my $dayHtml = $1;
             $html = $2;
             if ($dayHtml =~ m/^\s*$/s) {
