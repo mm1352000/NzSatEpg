@@ -31,11 +31,11 @@ sub getChannelData {
         print $::dbg 'Hope (' . __LINE__ . '): The request for the schedule page HTML failed. ' . $response->status_line() . "\n";
         return undef;
     }
-    if ($response->content !~ m/.*<div\s+class="month">.*?Hope\s+Channel\s+International.*?<a\s+href="([^"]+xls)".*/s) {
+    if ($response->content !~ m/.*\s+href="([^"]+hci.xls)".*/s) {
         print $::dbg 'Hope (' . __LINE__ . "): Failed to find the schedule XLS link.\n";
         return undef;
     }
-    $response = $::wua->get("http://www.hopetv.org/$1");
+    $response = $::wua->get("http://www2.hopetv.org/$1");
     if ($response->is_error()) {
         print $::dbg 'Hope (' . __LINE__ . "): Error downloading the schedule XLS from \"$1\". " . $response->status_line() . "\n";
         return undef;
@@ -69,6 +69,11 @@ sub getChannelData {
             my $rawTitle = $sheet->get_cell(3, 2)->value();
             if ($rawTitle =~ m/^\s*([^\s]+)\s+(\d+).*$/) {
                 $referenceDateTime = DateTime->today(time_zone => 'UTC')->set(day => $2, month => $::monthMap{$1}, hour => 0, minute => 0);
+                # Handle the case where the first month in the schedule is December and the current
+                # date is January later in the next year.
+                if (($referenceDateTime - DateTime->today())->months() > 6) {
+                    $referenceDateTime = $referenceDateTime->add(years => -1);
+                }
             }
             else {
                 print $::dbg 'Hope (' . __LINE__ . "): The sheet schedule date could not be parsed.\n";
@@ -109,14 +114,13 @@ sub getChannelData {
                 # If we get to here then one program is finishing and another is starting. First print the
                 # details of the program that is finishing.
                 my $progStartDateTime = $referenceDateTime->clone()->set_time_zone($::targetTimeZone);
-                my $progEndDateTime = $progStartDateTime->clone()->add(minutes => $prevProg{'length'} * 30)->strftime("%Y%m%d%H%M");
-                $progStartDateTime = $progStartDateTime->strftime("%Y%m%d%H%M");
+                my $progEndDateTime = $progStartDateTime->clone()->add(minutes => $prevProg{'length'} * 30);
                 $referenceDateTime->add(minutes => $prevProg{'length'} * 30);
-                if ($prevProg{'title'} ne '' && $progEndDateTime > $::startDate->strftime('%Y%m%d%H%M') && $progStartDateTime < $::endDate->strftime('%Y%m%d%H%M')) {
-                    $schedule{$progStartDateTime} = {
+                if ($prevProg{'title'} ne '' && $progEndDateTime > $::startDate && $progStartDateTime < $::endDate) {
+                    $schedule{$progStartDateTime->strftime("%Y%m%d%H%M")} = {
                         'title' => $prevProg{'title'}
-                        , 'start' => $progStartDateTime
-                        , 'end' => $progEndDateTime
+                        , 'start' => $progStartDateTime->strftime("%Y%m%d%H%M")
+                        , 'end' => $progEndDateTime->strftime("%Y%m%d%H%M")
                     };
                 }
 
