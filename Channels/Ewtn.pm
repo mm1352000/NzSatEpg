@@ -53,6 +53,10 @@ sub getChannelData {
         # The first programme section contains the name/description of each programme information
         # field.
         if ($isFirst) {
+            # Remove UTF-8 BOM.
+            if ($prog =~ m/^\xef\xbb\xbf(.*)$/) {
+                $prog = $1;
+            }
             @fields = split(/\t/, $prog);
             $isFirst = 0;
             next;
@@ -61,7 +65,6 @@ sub getChannelData {
         # Split the programme information by field.
         my $f = 0;
         map { $progInfo{$fields[$f++]} = $_; } split(/\t/, $prog);
-
         my $progStartDateTime = $dtFormat->parse_datetime($progInfo{'Start Date'} . ' ' . $progInfo{'Start Time'});
         $progStartDateTime->set_time_zone($::targetTimeZone);
 
@@ -95,11 +98,6 @@ sub getChannelData {
         }
         if ($progInfo{'FCC Rating V-Chip Code(s)'} ne '') {
             $p->{'rating'} = ['FCC:' . $progInfo{'FCC Rating V-Chip Code(s)'}];
-        }
-        if ($progInfo{'Star (All)'} ne '') {
-            # Not ideal, but we have no way to determine what role each person has.
-            my @producers = split(/(?<!\s)\,(?!\s)/, $progInfo{'Star (All)'});
-            $p->{'producer'} = \@producers;
         }
         if ($progInfo{'Program Genre'} ne '') {
             my @genres = split(/(?<!\s)\,(?!\s)/, $progInfo{'Program Genre'});
