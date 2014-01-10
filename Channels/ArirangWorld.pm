@@ -28,11 +28,13 @@ sub getChannelData {
     # The Arirang world schedule shows Monday..Sunday with Seoul time.
     my %schedule = ();
     my $dataFinished = 0;
-    my $referenceSeoulDate = $::startDate->clone()->set_time_zone('Asia/Seoul')->truncate(to => 'day');
-    $referenceSeoulDate->add(days => -$referenceSeoulDate->day_of_week() + 1);
-    my $referenceDate = $referenceSeoulDate->clone()->set_time_zone($::targetTimeZone);
-    while ($referenceDate < $::endDate) {
-        my $response = $::wua->get('http://www.arirang.co.kr/Tv/TV_Index.asp?MType=S&Channel=1&F_Date=' . $referenceSeoulDate->strftime('%Y-%m-%d'));
+    my $currentSeoulDate = $::startDate->clone()->set_time_zone('Asia/Seoul')->truncate(to => 'day');
+    $currentSeoulDate->add(days => -$currentSeoulDate->day_of_week() + 1);
+    my $prevStartDateTime = undef;
+    while ($currentSeoulDate->clone()->set_time_zone($::targetTimeZone) < $::endDate) {
+        my $weekStart = $currentSeoulDate->strftime('%Y-%m-%d');
+        print $::dbg "Arirang:\tweek $weekStart...\n";
+        my $response = $::wua->get("http://www.arirang.co.kr/Tv/TV_Index.asp?MType=S&Channel=1&F_Date=$weekStart");
         if ($response->is_error()) {
             print $::dbg 'Arirang (' . __LINE__ . '): The request for the schedule HTML failed. ' . $response->status_line() . "\n";
             return undef;
@@ -40,7 +42,9 @@ sub getChannelData {
         my $html = $response->content;
 
         # For each day...
+        my $d = 1;
         while ($html =~ m/.*?<table.*?summary="TV\s+Schedule">.*?<tbody>(.*?)<\/tbody>(.*)/s) {
+            print $::dbg "Arirang:\t\tday " . $d++ . "...\n";
             my $dayHtml = $1;
             $html = $2;
             if ($dayHtml =~ m/^\s*$/s) {
@@ -49,16 +53,16 @@ sub getChannelData {
             }
 
             # For each programme...
-            while ($dayHtml =~ m/.*?<tr>.*?<td\s+class="txt_left"><a\s+href="([^"]+)">(.*?)<\/a>.*?<td>(.*?)<\/td>.*?<td>(\d+)<\/td>(.*?)<\/tr>(.*)/s) {
-                my ($progUrl, $progTitle, $vodLink, $progLength, $firstRunHtml) = ($1, $2, $3, $4, $5);
-                $dayHtml = $6;
+            while ($dayHtml =~ m/.*?<tr>\s*<td>(\d+):(\d+)(<\!--\/\/-\d+:\d+-->)?<\/td>\s*<td>\d+:\d+(<\!--\/\/-\d+:\d+-->)?<\/td>\s*<td\s+class="txt_left"><a\s+href="([^"]+)">([^<]*?)<\/a><\/td>\s*<td>(.*?)<\/td>(.*?)<\/tr>(.*)/s) {
+                my ($progStartHours, $progStartMinutes, $progUrl, $progTitle, $vodLink, $firstRunHtml) = ($1, $2, $5, $6, $7, $8);
+                $dayHtml = $9;
 
-                my $endDateTime = $referenceDate->clone()->add(minutes => $progLength);
-                if ($endDateTime > $::startDate && $referenceDate < $::endDate) {
+                my $startDateTime = $currentSeoulDate->clone()->set(hour => $progStartHours, minute => $progStartMinutes)->set_time_zone($::targetTimeZone);
+                if ($startDateTime < $::endDate) {
+                    my $startDateTimeString = $startDateTime->strftime('%Y%m%d%H%M');
                     my $p = {
                         'title' => $progTitle
-                        , 'start' => $referenceDate->strftime('%Y%m%d%H%M')
-                        , 'end' => $endDateTime->strftime('%Y%m%d%H%M')
+                        , 'start' => $startDateTimeString
                     };
                     if ($vodLink =~ m/.*?<a\s+href="([^"]+)"/) {
                         $p->{'url'} = ["http://www.arirang.co.kr/Tv/$progUrl", "http://www.arirang.co.kr/Tv/$1"];
@@ -66,17 +70,37 @@ sub getChannelData {
                     else {
                         $p->{'url'} = ["http://www.arirang.co.kr/Tv/$progUrl"];
                     }
-                    if ($firstRunHtml =~ m/firstrun/) {
+                    if (defined $firstRunHtml && $firstRunHtml =~ m/firstrun/) {
                         $p->{'premiere'} = 'First showing in current run.';
                     }
                     $schedule{$p->{'start'}} = $p;
+
+                    # Set the end time on the previous programme, or delete it if it doesn't cover
+                    # part of the window of interest.
+                    if (defined $prevStartDateTime && exists $schedule{$prevStartDateTime}) {
+                        if ($startDateTime <= $::startDate) {
+                            delete $schedule{$prevStartDateTime};
+                        }
+                        else {
+                            $schedule{$prevStartDateTime}->{'end'} = $startDateTimeString;
+                        }
+                    }
+
+                    $prevStartDateTime = $startDateTimeString;
                 }
-                $referenceDate = $endDateTime;
+                else {
+                    $prevStartDateTime = undef;
+                }
             }
+            $currentSeoulDate->add(days => 1);
         }
 
         last if ($dataFinished);
-        $referenceSeoulDate->add(days => 7);
+    }
+
+    # Delete the last programme if we weren't able to get an end time for it.
+    if (defined $prevStartDateTime && !exists $schedule{$prevStartDateTime}->{'end'}) {
+        delete $schedule{$prevStartDateTime};
     }
 
     return [
