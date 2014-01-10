@@ -30,7 +30,7 @@ sub getChannelData {
     my $currentMoscowDate = $::startDate->clone()->set_time_zone('Europe/Moscow')->truncate(to => 'day');
     my $targetTzDate = $::startDate->clone();
     my %descriptions = ();
-	my %prevProg = (
+    my %prevProg = (
         'title' => ''
         , 'start' => undef
         , 'url' => ''
@@ -39,21 +39,21 @@ sub getChannelData {
         # Grab the data for the day.
         print $::dbg "RT:\tday $targetTzDate...\n";
 
-        my $response = $::wua->get('http://rt.com/programs/schedule/' . $currentMoscowDate->strftime('%Y-%m-%d'));
+        my $response = $::wua->get('http://rt.com/schedule/' . $currentMoscowDate->strftime('%Y-%m-%d'));
         if ($response->is_error()) {
             print $::dbg 'RT (' . __LINE__ . '): The request for the schedule HTML failed. ' . $response->status_line() . "\n";
             return undef;
         }
 
         # Cut to the relevant content.
-        if ($response->content !~ m/<div\s+class="cont-wp\s+table">\s*<table>\s*<tbody>\s*(.*?)\s*<\/tbody>/s) {
+        if ($response->content !~ m/<div\s+class="b-schedule_tabl-body">\s*(.*)/s) {
             print $::dbg 'RT (' . __LINE__ . "): The schedule format has changed.\n";
             return undef;
         }
         my $html = $1;
 
         # For each programmme...
-        while ($html =~ m/.*?<tr>\s*<td\s+class=""><strong><strong>(\d+):(\d+)<\/strong><\/strong>\s*<span[^>]*>([ap]m)<\/span><\/td>\s*<td><a\s+href="([^"]+)"[^>]*?>\s*(.*?)\s*<\/a><\/td>(.*)/s) {
+        while ($html =~ m/.*?<strong>(\d+):(\d+)\s*<span[^>]*>([ap]m)<\/span><\/strong>\s*<a\s+href="([^"]+)"[^>]*?>\s*(.*?)\s*<\/a>(.*)/s) {
             my ($hour, $minute, $amPm, $progUrl, $progTitle) = ($1, $2, $3, "http://rt.com$4", $5);
             $html = $6;
 
