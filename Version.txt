@@ -1,10 +1,15 @@
 Current Version
 ----------------
-The current NzSatEpg version is 1.0 alpha.
+The current NzSatEpg version is 1.1 alpha.
 
 Release Notes
 --------------
 
+===============================================================================
+1.1 alpha 2014-01-10
+
+Fix channels that have broken sometime in the last 10 months or so. Press TV is
+still broken, but all other channels should be functional again.
 ===============================================================================
 1.0 alpha 2013-03-27
 

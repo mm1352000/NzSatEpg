@@ -41,7 +41,7 @@ use Channels::ThreeAbn;
 # Important Variables
 #==================================================================================================
 # This is the full path to the output file.
-$::outputFile = 'C:\Program Files\XMLTV\tvguide2.xml';
+$::outputFile = 'C:\Program Files\XMLTV\tvguide.xml';
 
 # This is the directory that is used to store the files that are downloaded by this script.
 $::tempPath = 'C:\Program Files\XMLTV';
